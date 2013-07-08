@@ -48,13 +48,17 @@ public class ProxyScraperThread extends Thread implements Runnable {
 			
 			synchronized (this.scraper.results){
 				while (matcher.find()){
-					String ip = matcher.group(1);
-					String port = matcher.group(2);
-					
-					Proxy proxy = new Proxy(this.scraper.getType(), new InetSocketAddress(ip, Integer.parseInt(port)));
-					
-					if (!this.scraper.results.contains(proxy)){
-						this.scraper.results.add(proxy);
+					try{
+						String ip = matcher.group(1);
+						String port = matcher.group(2);
+						
+						Proxy proxy = new Proxy(this.scraper.getType(), new InetSocketAddress(ip, Integer.parseInt(port)));
+						
+						if (!this.scraper.results.contains(proxy)){
+							this.scraper.results.add(proxy);
+						}
+					}catch (IllegalArgumentException e){
+						/* Ignore invalid proxies */
 					}
 				}
 			}
