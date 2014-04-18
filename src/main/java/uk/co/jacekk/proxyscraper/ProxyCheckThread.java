@@ -62,11 +62,16 @@ public class ProxyCheckThread extends Thread implements Runnable {
 			if (response.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}") && !response.equals(this.reference)){
 				synchronized (this.list.working){
 					this.list.working.add(this.proxy);
+					System.out.println("Checked working proxy: " + this.proxy.toString());
 				}
 			}
 		}catch (Exception e){
 			if (!(e instanceof IOException)){
 				e.printStackTrace();
+			}
+			
+			synchronized (this.list.working){
+				System.out.println("Checked dead proxy: " + this.proxy.toString() + " - " + e.getMessage());
 			}
 		}
 		

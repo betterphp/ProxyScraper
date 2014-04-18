@@ -26,11 +26,16 @@ public class ProxyScraperThread extends Thread implements Runnable {
 	@Override
 	public void run(){
 		try{
+			synchronized (this.scraper){
+				System.out.println("Scraping " + this.url.toString());				
+			}
+			
 			HttpURLConnection connection = (HttpURLConnection) this.url.openConnection();
 			
 			connection.setConnectTimeout(5000);
 			connection.setReadTimeout(5000);
 			connection.setUseCaches(false);
+			connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:28.0) Gecko/20100101 Firefox/28.0");
 			
 			BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 			

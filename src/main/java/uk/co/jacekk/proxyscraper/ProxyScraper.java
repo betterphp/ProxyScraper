@@ -1,5 +1,9 @@
 package uk.co.jacekk.proxyscraper;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -117,6 +121,60 @@ public class ProxyScraper {
 		this.scrape(threads);
 		
 		return this.getProxyList();
+	}
+	
+	public static void main(String args[]){
+		if (args.length != 3){
+			System.err.println("Usage: ProjexyScraper.jar <type> <threads> <file>");
+			System.exit(1);
+		}
+		
+		Proxy.Type proxyType = null;
+		int threads = 10;
+		
+		try{
+			proxyType = Proxy.Type.valueOf(args[0]);
+		}catch (IllegalArgumentException e){
+			System.err.println(args[0] + " is not a valid proxy type");
+			System.exit(1);
+		}
+		
+		try{
+			threads = Integer.parseInt(args[1]);
+		}catch (NumberFormatException e){
+			System.err.println("Usage: ProjexyScraper.jar <threads> <file>");
+			System.exit(1);
+		}
+		
+		File file = new File(args[2]);
+		
+		try{
+			file.createNewFile();
+		}catch (IOException e){
+			System.err.println("Failed to create file: " + e.getMessage());
+			System.exit(1);
+		}
+		
+		ProxyScraper scraper = new ProxyScraper(proxyType);
+		ProxyList list = scraper.scrapeProxyList(threads);
+		
+		list.check(threads);
+		
+		try{
+			FileWriter writer = new FileWriter(file);
+			
+			for (Proxy proxy : list.getWorking()){
+				InetSocketAddress address = (InetSocketAddress) proxy.address();
+				
+				writer.write(address.getHostString() + ":" + address.getPort());
+				writer.write('\n');
+			}
+			
+			writer.close();
+		}catch (IOException e){
+			System.err.println("Failed to write proxy file: " + e.getMessage());
+			System.exit(1);
+		}
 	}
 	
 }
