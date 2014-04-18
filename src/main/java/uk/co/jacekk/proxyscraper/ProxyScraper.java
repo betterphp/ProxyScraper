@@ -21,15 +21,10 @@ public class ProxyScraper {
 		sources = new HashMap<Proxy.Type, String[]>();
 		
 		sources.put(Proxy.Type.HTTP, new String[]{
-			"http://www.pr0xies.org/feeds/posts/default",
-			"http://proxyserverlist.blogspot.co.uk/",
-			"http://new-fresh-proxies.blogspot.com/feeds/posts/default",
-			"http://newdailyproxies.blogspot.com/feeds/posts/default",
-			"http://google-proxies.blogspot.com/feeds/posts/default",
-			"http://proxycollections.blogspot.com/feeds/posts/default",
-			"http://proxies24.blogspot.com/feeds/posts/default",
-			"http://proxyhell.blogspot.com/feeds/posts/default",
-			"http://www.scrapeboxproxies.net/feeds/posts/default",
+			"http://free-proxyserver-list.blogspot.com/feeds/posts/default",
+			"http://free-ssl-proxies.blogspot.com/feeds/posts/default",
+			"http://proxy1e.blogspot.nl/feeds/posts/default",
+			"http://proxypremium.blogspot.com/feeds/posts/default",
 			"http://aliveproxies.com/ipproxy/page/1/",
 			"http://aliveproxies.com/ipproxy/page/2/",
 			"http://aliveproxies.com/ipproxy/page/3/",
@@ -55,13 +50,15 @@ public class ProxyScraper {
 		
 		sources.put(Proxy.Type.SOCKS, new String[]{
 			"http://www.socks24.org/feeds/posts/default",
-			"http://golden-socks.blogspot.com/feeds/posts/default",
-			"http://us-socks.blogspot.co.uk/search/label/Socks%205%20Servers",
 			"http://www.live-socks.net/feeds/posts/default",
-			"http://www.vip-socks.net/search/label/VIP%20Socks%205%20Servers",
-			"http://www.vip-socks.net/search/label/Live%20Socks%205%20Proxy%20Servers",
-			"http://www.socks5list.com/feeds/posts/default",
-			"http://socksproxy-list.blogspot.com/feeds/posts/default",
+			"http://www.vip-socks.net/search/label/VIP%20Socks",
+			"http://www.vip-socks.net/search/label/Socks%205",
+			"http://socks5-proxy-list.blogspot.com/feeds/posts/default",
+			"http://socks5-servers.blogspot.com/feeds/posts/default",
+			"http://24h-sock.blogspot.nl/",
+			"http://sockproxy.blogspot.com/feeds/posts/default",
+			"http://elitesocksproxy.blogspot.nl/feeds/posts/default",
+			"http://freesockproxy.blogspot.com/feeds/posts/default",
 		});
 	}
 	
