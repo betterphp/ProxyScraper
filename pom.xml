@@ -10,8 +10,20 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 	
+	<repositories>
+		<repository>
+			<id>jacekk-repo</id>
+			<url>https://ci.jacekk.co.uk/plugin/repository/everything/</url>
+		</repository>
+	</repositories>
+	
 	<dependencies>
-		
+		<dependency>
+			<groupId>uk.co.jacekk</groupId>
+			<artifactId>scraperlib</artifactId>
+			<version>0.3</version>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 	
 	<build>
@@ -23,7 +35,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-shade-plugin</artifactId>
-				<version>2.0</version>
+				<version>2.4.3</version>
 				<executions>
 					<execution>
 						<phase>package</phase>
@@ -36,7 +48,7 @@
 					<finalName>${project.name}</finalName>
 					<artifactSet>
 						<includes>
-							
+							<include>uk.co.jacekk:scraperlib</include>
 						</includes>
 					</artifactSet>
 				</configuration>
@@ -45,7 +57,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
-				<version>2.4</version>
+				<version>3.0.2</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -58,10 +70,10 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.0</version>
+				<version>3.5.1</version>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 		</plugins>
