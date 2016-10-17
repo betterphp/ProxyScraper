@@ -3,3 +3,4 @@
 /.settings
 dependency-reduced-pom.xml
 /target
+/proxy-list.txt
