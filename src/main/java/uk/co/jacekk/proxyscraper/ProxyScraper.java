@@ -125,7 +125,7 @@ public class ProxyScraper {
 		
 		ProgressHandler progressHandler = new StreamOutputProgressHandler();
 		CombinedListResultsHandler<Proxy> resultHandler = new CombinedListResultsHandler<Proxy>();
-		ScraperQueue<ProxyCheckScraper, Proxy> queue = new ScraperQueue<ProxyCheckScraper, Proxy>(threads, 2, progressHandler, resultHandler);
+		ScraperQueue<ProxyCheckScraper, Proxy> queue = new ScraperQueue<ProxyCheckScraper, Proxy>(threads, 1, progressHandler, resultHandler);
 		
 		try{
 			HttpURLConnection connection = (HttpURLConnection) (new URL("https://jacekk.co.uk/ip.php")).openConnection();
@@ -193,7 +193,7 @@ public class ProxyScraper {
 		ProxyScraper scraper = new ProxyScraper(proxyType);
 		
 		scraper.scrape(10);
-		scraper.check(100);
+		scraper.check(250);
 		
 		try{
 			FileWriter writer = new FileWriter(file);
