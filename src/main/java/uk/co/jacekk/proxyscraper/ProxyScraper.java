@@ -1,15 +1,21 @@
 package uk.co.jacekk.proxyscraper;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.HashSet;
+import java.util.Set;
+import uk.co.jacekk.scraperlib.CombinedListResultsHandler;
+import uk.co.jacekk.scraperlib.ProgressHandler;
+import uk.co.jacekk.scraperlib.ScraperQueue;
+import uk.co.jacekk.scraperlib.StreamOutputProgressHandler;
 
 public class ProxyScraper {
 	
@@ -17,9 +23,7 @@ public class ProxyScraper {
 	
 	private String[] sites;
 	private Proxy.Type type;
-	
-	protected ArrayBlockingQueue<ProxyScraperThread> threads;
-	protected List<Proxy> results;
+	private HashSet<Proxy> results;
 	
 	static {
 		sources = new HashMap<Proxy.Type, String[]>();
@@ -99,58 +103,72 @@ public class ProxyScraper {
 		}
 		
 		this.type = type;
-		this.results = Collections.synchronizedList(new ArrayList<Proxy>());
+		this.results = null;
 	}
 	
 	public void scrape(int threads){
-		if (threads > this.sites.length){
-			threads = this.sites.length;
-		}
-		
-		this.threads = new ArrayBlockingQueue<ProxyScraperThread>(threads);
+		ProgressHandler progressHandler = new StreamOutputProgressHandler();
+		CombinedListResultsHandler<Proxy> resultHandler = new CombinedListResultsHandler<Proxy>();
+		ScraperQueue<ProxyListScraper, Proxy> queue = new ScraperQueue<ProxyListScraper, Proxy>(threads, 8, progressHandler, resultHandler);
 		
 		for (String url : this.sites){
-			try{
-				ProxyScraperThread thread = new ProxyScraperThread(this, url);
-				this.threads.put(thread);
-				thread.start();
-			}catch (Exception e){
-				e.printStackTrace();
-			}
+			queue.addScraper(new ProxyListScraper(this.type, url));
 		}
 		
-		synchronized (this.threads){
-			while (!this.threads.isEmpty()){
-				try{
-					this.threads.wait();
-				}catch (InterruptedException e){
-					e.printStackTrace();
-				}
+		queue.scrape();
+		
+		this.results = new HashSet<Proxy>(resultHandler.getResults());
+	}
+	
+	public void check(int threads){
+		String reference = "127.0.0.1";
+		
+		ProgressHandler progressHandler = new StreamOutputProgressHandler();
+		CombinedListResultsHandler<Proxy> resultHandler = new CombinedListResultsHandler<Proxy>();
+		ScraperQueue<ProxyCheckScraper, Proxy> queue = new ScraperQueue<ProxyCheckScraper, Proxy>(threads, 2, progressHandler, resultHandler);
+		
+		try{
+			HttpURLConnection connection = (HttpURLConnection) (new URL("https://jacekk.co.uk/ip.php")).openConnection();
+			
+			connection.setReadTimeout(4000);
+			connection.setConnectTimeout(4000);
+			connection.setUseCaches(false);
+			
+			BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+			
+			StringBuilder builder = new StringBuilder();
+			
+			while ((reference = input.readLine()) != null){
+				builder.append(reference);
 			}
+			
+			reference = builder.toString().trim();
+			
+			input.close();
+		}catch (Exception e){
+			e.printStackTrace();
 		}
+				
+		for (Proxy proxy : this.results){
+			queue.addScraper(new ProxyCheckScraper(proxy, reference));
+		}
+		
+		queue.scrape();
+		
+		this.results = new HashSet<Proxy>(resultHandler.getResults());
 	}
 	
 	public Proxy.Type getType(){
 		return this.type;
 	}
 	
-	public List<Proxy> getResults(){
+	public Set<Proxy> getResults(){
 		return this.results;
-	}
-	
-	public ProxyList getProxyList(){
-		return new ProxyList(this.results);
-	}
-	
-	public ProxyList scrapeProxyList(int threads){
-		this.scrape(threads);
-		
-		return this.getProxyList();
 	}
 	
 	public static void main(String args[]){
 		if (args.length != 3){
-			System.err.println("Usage: ProjexyScraper.jar <type> <threads> <file>");
+			System.err.println("Usage: ProxyScraper.jar <type> <threads> <file>");
 			System.exit(1);
 		}
 		
@@ -167,7 +185,7 @@ public class ProxyScraper {
 		try{
 			threads = Integer.parseInt(args[1]);
 		}catch (NumberFormatException e){
-			System.err.println("Usage: ProjexyScraper.jar <threads> <file>");
+			System.err.println("Usage: ProxyScraper.jar <type> <threads> <file>");
 			System.exit(1);
 		}
 		
@@ -181,14 +199,14 @@ public class ProxyScraper {
 		}
 		
 		ProxyScraper scraper = new ProxyScraper(proxyType);
-		ProxyList list = scraper.scrapeProxyList(threads);
 		
-		list.check(threads);
+		scraper.scrape(threads);
+		scraper.check(threads);
 		
 		try{
 			FileWriter writer = new FileWriter(file);
 			
-			for (Proxy proxy : list.getWorking()){
+			for (Proxy proxy : scraper.getResults()){
 				InetSocketAddress address = (InetSocketAddress) proxy.address();
 				
 				writer.write(address.getHostString() + ":" + address.getPort());

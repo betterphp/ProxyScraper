@@ -1,86 +1,61 @@
 package uk.co.jacekk.proxyscraper;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
 
-public class ProxyCheckThread extends Thread implements Runnable {
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+
+import uk.co.jacekk.scraperlib.Scraper;
+
+public class ProxyCheckScraper extends Scraper<Proxy> {
 	
-	private ProxyList list;
 	private Proxy proxy;
 	private String reference;
+	private Gson gson;
 	
-	public ProxyCheckThread(ProxyList list, Proxy proxy, String reference){
-		this.list = list;
+	public ProxyCheckScraper(Proxy proxy, String reference){
+		super(null);
+		
 		this.proxy = proxy;
 		this.reference = reference;
+		this.gson = (new GsonBuilder()).create();
 	}
 	
 	@Override
-	public int hashCode(){
-		return this.proxy.hashCode();
-	}
-	
-	@Override
-	public boolean equals(Object compare){
-		if (compare == this){
-			return true;
+	public void scrape(List<Scraper<Proxy>> newScrapers, List<Proxy> results) throws IOException {
+		HttpURLConnection connection = (HttpURLConnection) (new URL("https://jacekk.co.uk/verify.php")).openConnection(this.proxy);
+		
+		connection.setReadTimeout(4000);
+		connection.setConnectTimeout(4000);
+		connection.setUseCaches(false);
+		
+		InputStreamReader input = new InputStreamReader(connection.getInputStream());
+		
+		HashMap<String, String> fields = this.gson.fromJson(input, new TypeToken<HashMap<String, String>>(){}.getType());
+		
+		String remoteAddr = fields.get("remote_addr");
+		String forwardedAddr = fields.get("forwarded_addr");
+		
+		input.close();
+		
+		// Proxy didn't connect or somehow sent our real IP
+		if (remoteAddr == null || remoteAddr.equals(this.reference)){
+			throw new IOException("Proxy returned no content or somehow sent our real IP");
 		}
 		
-		if (!(compare instanceof ProxyCheckThread)){
-			return false;
+		// Proxy passed out real IP
+		if (forwardedAddr != null && forwardedAddr.equals(this.reference)){
+			throw new IOException("Proxy sent our real IP as a HTTP header");
 		}
 		
-		return ((ProxyCheckThread) compare).proxy.equals(this.proxy);
-	}
-	
-	@Override
-	public void run(){
-		try{
-			HttpURLConnection connection = (HttpURLConnection) (new URL("http://jacekk.co.uk/ip.php")).openConnection(this.proxy);
-			
-			connection.setReadTimeout(4000);
-			connection.setConnectTimeout(4000);
-			connection.setUseCaches(false);
-			
-			BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			
-			String response;
-			StringBuilder builder = new StringBuilder();
-			
-			while ((response = input.readLine()) != null){
-				builder.append(response);
-			}
-			
-			response = builder.toString().trim();
-			
-			input.close();
-			
-			if (response.matches("[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}") && !response.equals(this.reference)){
-				synchronized (this.list.working){
-					this.list.working.add(this.proxy);
-					System.out.println("Checked working proxy: " + this.proxy.toString());
-				}
-			}
-		}catch (Exception e){
-			if (!(e instanceof IOException)){
-				e.printStackTrace();
-			}
-			
-			synchronized (this.list.working){
-				System.out.println("Checked dead proxy: " + this.proxy.toString() + " - " + e.getMessage());
-			}
-		}
-		
-		synchronized (this.list.threads){
-			this.list.threads.remove(this);
-			this.list.threads.notify();
-		}
-		
-	//	System.out.println(this.list.getTotalWorking() + "/" + this.list.getTotal());
+		results.add(this.proxy);
 	}
 	
 }

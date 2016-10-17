@@ -5,75 +5,56 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
-import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ProxyScraperThread extends Thread implements Runnable {
+import uk.co.jacekk.scraperlib.Scraper;
+
+public class ProxyListScraper extends Scraper<Proxy> {
 	
-	private ProxyScraper scraper;
-	private URL url;
+	private Proxy.Type proxyType;
 	
-	public ProxyScraperThread(ProxyScraper scraper, String url) throws MalformedURLException {
-		super("Proxy Scraper Thread: " + url);
+	public ProxyListScraper(Proxy.Type proxyType, String url){
+		super(url);
 		
-		this.scraper = scraper;
-		this.url = new URL(url);
+		this.proxyType = proxyType;
 	}
-	
+
 	@Override
-	public void run(){
-		try{
-			synchronized (this.scraper){
-				System.out.println("Scraping " + this.url.toString());				
-			}
-			
-			HttpURLConnection connection = (HttpURLConnection) this.url.openConnection();
-			
-			connection.setConnectTimeout(5000);
-			connection.setReadTimeout(5000);
-			connection.setUseCaches(false);
-			connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:28.0) Gecko/20100101 Firefox/28.0");
-			
-			BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			
-			String line;
-			StringBuilder page = new StringBuilder();
-			
-			while ((line = input.readLine()) != null){
-				page.append(line);
-				page.append('\n');
-			}
-			
-			input.close();
-			
-			Matcher matcher = Pattern.compile("([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}):([0-9]{1,5})").matcher(page.toString());
-			
-			synchronized (this.scraper.results){
-				while (matcher.find()){
-					try{
-						String ip = matcher.group(1);
-						String port = matcher.group(2);
-						
-						Proxy proxy = new Proxy(this.scraper.getType(), new InetSocketAddress(ip, Integer.parseInt(port)));
-						
-						if (!this.scraper.results.contains(proxy)){
-							this.scraper.results.add(proxy);
-						}
-					}catch (IllegalArgumentException e){
-						/* Ignore invalid proxies */
-					}
-				}
-			}
-		}catch (IOException e){
-			e.printStackTrace();
+	public void scrape(List<Scraper<Proxy>> newScrapers, List<Proxy> results) throws IOException {
+		HttpURLConnection connection = (HttpURLConnection) (new URL(this.getUrl())).openConnection();
+		
+		connection.setConnectTimeout(5000);
+		connection.setReadTimeout(5000);
+		connection.setUseCaches(false);
+		connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:28.0) Gecko/20100101 Firefox/28.0");
+		
+		BufferedReader input = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		
+		String line;
+		StringBuilder page = new StringBuilder();
+		
+		while ((line = input.readLine()) != null){
+			page.append(line);
+			page.append('\n');
 		}
 		
-		synchronized (this.scraper.threads){
-			this.scraper.threads.remove(this);
-			this.scraper.threads.notify();
+		input.close();
+		
+		Matcher matcher = Pattern.compile("([0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}):([0-9]{1,5})").matcher(page.toString());
+		
+		while (matcher.find()){
+			try{
+				String ip = matcher.group(1);
+				String port = matcher.group(2);
+				
+				results.add(new Proxy(this.proxyType, new InetSocketAddress(ip, Integer.parseInt(port))));
+			}catch (IllegalArgumentException e){
+				/* Ignore invalid proxies */
+			}
 		}
 	}
 	
