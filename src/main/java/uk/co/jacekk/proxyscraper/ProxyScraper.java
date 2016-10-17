@@ -167,13 +167,12 @@ public class ProxyScraper {
 	}
 	
 	public static void main(String args[]){
-		if (args.length != 3){
-			System.err.println("Usage: ProxyScraper.jar <type> <threads> <file>");
+		if (args.length != 2){
+			System.err.println("Usage: ProxyScraper.jar <type> <file>");
 			System.exit(1);
 		}
 		
 		Proxy.Type proxyType = null;
-		int threads = 10;
 		
 		try{
 			proxyType = Proxy.Type.valueOf(args[0]);
@@ -182,14 +181,7 @@ public class ProxyScraper {
 			System.exit(1);
 		}
 		
-		try{
-			threads = Integer.parseInt(args[1]);
-		}catch (NumberFormatException e){
-			System.err.println("Usage: ProxyScraper.jar <type> <threads> <file>");
-			System.exit(1);
-		}
-		
-		File file = new File(args[2]);
+		File file = new File(args[1]);
 		
 		try{
 			file.createNewFile();
@@ -200,8 +192,8 @@ public class ProxyScraper {
 		
 		ProxyScraper scraper = new ProxyScraper(proxyType);
 		
-		scraper.scrape(threads);
-		scraper.check(threads);
+		scraper.scrape(10);
+		scraper.check(100);
 		
 		try{
 			FileWriter writer = new FileWriter(file);
