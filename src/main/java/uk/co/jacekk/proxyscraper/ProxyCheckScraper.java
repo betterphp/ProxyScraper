@@ -30,21 +30,29 @@ public class ProxyCheckScraper extends Scraper<Proxy> {
 	
 	@Override
 	public void scrape(List<Scraper<Proxy>> newScrapers, List<Proxy> results) throws IOException {
-		HttpURLConnection connection = (HttpURLConnection) (new URL("https://jacekk.co.uk/verify.php")).openConnection(this.proxy);
+		HttpURLConnection connection;
+		String remoteAddr = null;
+		String forwardedAddr = null;
 		
-		connection.setReadTimeout(4000);
-		connection.setConnectTimeout(4000);
-		connection.setUseCaches(false);
-		
-		InputStreamReader input = new InputStreamReader(connection.getInputStream());
-		
-		HashMap<String, String> fields = this.gson.fromJson(input, new TypeToken<HashMap<String, String>>(){}.getType());
-		
-		String remoteAddr = fields.get("remote_addr");
-		String forwardedAddr = fields.get("forwarded_addr");
-		
-		input.close();
-		
+		try {
+			connection = (HttpURLConnection) (new URL("https://jacekk.co.uk/verify.php")).openConnection(this.proxy);
+			
+			connection.setReadTimeout(10000);
+			connection.setConnectTimeout(6000);
+			connection.setUseCaches(false);
+			
+			InputStreamReader input = new InputStreamReader(connection.getInputStream());
+			
+			HashMap<String, String> fields = this.gson.fromJson(input, new TypeToken<HashMap<String, String>>(){}.getType());
+			
+			remoteAddr = fields.get("remote_addr");
+			forwardedAddr = fields.get("forwarded_addr");
+			
+			input.close();
+		} catch (IOException exception){
+			throw new IOException("Failed to connect via proxy");
+		}
+	
 		// Proxy didn't connect or somehow sent our real IP
 		if (remoteAddr == null || remoteAddr.equals(this.reference)){
 			throw new IOException("Proxy returned no content or somehow sent our real IP");
