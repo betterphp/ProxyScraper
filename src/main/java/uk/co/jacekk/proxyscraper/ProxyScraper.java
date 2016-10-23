@@ -114,7 +114,7 @@ public class ProxyScraper {
 	public void scrape(int threads){
 		ProgressHandler progressHandler = new StreamOutputProgressHandler();
 		CombinedListResultsHandler<Proxy> resultHandler = new CombinedListResultsHandler<Proxy>();
-		ScraperQueue<BasicProxyListScraper, Proxy> queue = new ScraperQueue<BasicProxyListScraper, Proxy>(threads, 8, progressHandler, resultHandler);
+		ScraperQueue<BasicProxyListScraper, Proxy> queue = new ScraperQueue<BasicProxyListScraper, Proxy>(threads, 8, 10000l, progressHandler, resultHandler);
 		
 		if (basicSources.containsKey(this.type)){
 			for (String url : basicSources.get(this.type)){
@@ -204,7 +204,7 @@ public class ProxyScraper {
 		
 		ProgressHandler progressHandler = new StreamOutputProgressHandler();
 		CombinedListResultsHandler<Proxy> resultHandler = new CombinedListResultsHandler<Proxy>();
-		ScraperQueue<ProxyCheckScraper, Proxy> queue = new ScraperQueue<ProxyCheckScraper, Proxy>(threads, 1, progressHandler, resultHandler);
+		ScraperQueue<ProxyCheckScraper, Proxy> queue = new ScraperQueue<ProxyCheckScraper, Proxy>(threads, 1, 10000l, progressHandler, resultHandler);
 		
 		try{
 			HttpURLConnection connection = (HttpURLConnection) (new URL("https://jacekk.co.uk/ip.php")).openConnection();
