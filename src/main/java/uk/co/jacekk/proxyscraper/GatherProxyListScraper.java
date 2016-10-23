@@ -56,8 +56,6 @@ public class GatherProxyListScraper extends ProxyListScraper {
 			for (Element pageLink : document.select(".pagenavi > a")){
 				Integer nextPage = Integer.parseInt(pageLink.text().trim());
 				
-				System.out.println(nextPage);
-				
 				if (nextPage > 1){
 					newScrapers.add(new GatherProxyListScraper(this.proxyType, this.getUrl(), this.type, nextPage));
 				}
